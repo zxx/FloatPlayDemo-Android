@@ -8,8 +8,10 @@ import android.text.TextUtils;
 
 public class FloatPlayService extends Service{
 
-	private static FloatPlayService instance;
+	public static final String VIDEO_SOURCE = "VideoSource";
+	public static final String VIDEO_SOURCE_TYPE = "VideoSourceType";
 	
+	private static FloatPlayService instance;
 	private FloatPlayer mFloatPlayer;
 	
 	@Override
@@ -38,8 +40,8 @@ public class FloatPlayService extends Service{
 		String videoSource = null;
 		int videoSourceType = -1;
 		if(intent != null) {
-			videoSource = intent.getStringExtra("VideoSource");
-			videoSourceType = intent.getIntExtra("VideoSourceType", -1);
+			videoSource = intent.getStringExtra(VIDEO_SOURCE);
+			videoSourceType = intent.getIntExtra(VIDEO_SOURCE_TYPE, -1);
 		}
 		if(!TextUtils.isEmpty(videoSource) && (videoSourceType == 0 || videoSourceType == 1)) {
 			mFloatPlayer.setVideoSource(videoSourceType, videoSource);

@@ -12,6 +12,7 @@ import java.lang.reflect.Field;
 
 import love.amy.player.R;
 import android.content.Context;
+import android.graphics.PixelFormat;
 import android.net.Uri;
 import android.view.Display;
 import android.view.Gravity;
@@ -25,6 +26,7 @@ import android.view.View.OnTouchListener;
 import android.view.WindowManager;
 import android.view.WindowManager.LayoutParams;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 /**
@@ -88,6 +90,8 @@ public class FloatPlayer implements OnInfoListener, OnBufferingUpdateListener, O
 	// State
 	private boolean isPlayerStopped;
 
+	private RelativeLayout mRelativeLayout;
+
 	public FloatPlayer(FloatPlayService floatPlayService) {
 		this.mFloatPlayService = floatPlayService;
 		this.mStatusBarHeight = getStatusBarHeight();
@@ -119,6 +123,7 @@ public class FloatPlayer implements OnInfoListener, OnBufferingUpdateListener, O
 	private void initView() {
 		LayoutInflater inflater = (LayoutInflater) mFloatPlayService.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 		rootView = inflater.inflate(R.layout.activity_vitamio, null);
+		mRelativeLayout =  (RelativeLayout) rootView.findViewById(R.id.root);
 		mProgressBar = (ProgressBar) rootView.findViewById(R.id.vitamio_probar);
 		mLoadRate = (TextView) rootView.findViewById(R.id.vitamio_load_rate);			// 加载进度
 		mDownloadRate = (TextView) rootView.findViewById(R.id.vitamio_download_rate);	// 下载速度
@@ -128,8 +133,11 @@ public class FloatPlayer implements OnInfoListener, OnBufferingUpdateListener, O
 		
 		rootView.setOnTouchListener(this);
 		mScaleGestureDetector = new ScaleGestureDetector(mFloatPlayService, this);
+		
 		// 没有这个画面就会透明, 不清晰
 		mVideoView.setZOrderOnTop(true);
+		mVideoView.setZOrderMediaOverlay(true);
+		mVideoView.getHolder().setFormat(PixelFormat.RGBX_8888);
 	}
 	
 	@Override
@@ -236,6 +244,10 @@ public class FloatPlayer implements OnInfoListener, OnBufferingUpdateListener, O
 		setCorrectXY(leftX, leftY);
 		
 		android.view.ViewGroup.LayoutParams lp = mVideoView.getLayoutParams();
+		lp.width = scaledWidth;
+		lp.height = scaledHeight;
+		
+		lp = mRelativeLayout.getLayoutParams();
 		lp.width = scaledWidth;
 		lp.height = scaledHeight;
 		
