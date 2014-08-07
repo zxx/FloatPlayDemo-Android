@@ -34,7 +34,7 @@ public class FloatPlayService extends Service{
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-		stop();
+		stopFloatPlayer();
 		mFloatPlayer = new FloatPlayer(this);
 		
 		String videoSource = null;
@@ -51,17 +51,32 @@ public class FloatPlayService extends Service{
 		return super.onStartCommand(intent, flags, startId);
 	}
 	
-	public void stop() {
+	private void stopFloatPlayer() {
 		if(mFloatPlayer != null) {
 			mFloatPlayer.stop();
 		}
 		mFloatPlayer = null;
 	}
 	
+	public void stopFloatPlayerAndFloatService() {
+		if(mFloatPlayer != null ) {
+			mFloatPlayer.stop();
+		}
+		mFloatPlayer = null;
+		stopSelf();
+	}
+	
+	boolean isJustStop;
+	public void justStop() {
+		isJustStop = true;
+		stopSelf();
+		mFloatPlayer = null;
+	}
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
 		instance = null;
-		stop();
+		if(!isJustStop) 
+			stopFloatPlayer();
 	}
 }

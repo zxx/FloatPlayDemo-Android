@@ -6,14 +6,17 @@ import io.vov.vitamio.MediaPlayer.OnCompletionListener;
 import io.vov.vitamio.MediaPlayer.OnErrorListener;
 import io.vov.vitamio.MediaPlayer.OnInfoListener;
 import io.vov.vitamio.MediaPlayer.OnPreparedListener;
+import io.vov.vitamio.utils.Log;
 import io.vov.vitamio.widget.VideoView;
 
 import java.lang.reflect.Field;
 
 import love.amy.player.R;
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.PixelFormat;
 import android.net.Uri;
+import android.os.Build;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -26,7 +29,6 @@ import android.view.View.OnTouchListener;
 import android.view.WindowManager;
 import android.view.WindowManager.LayoutParams;
 import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 /**
@@ -75,6 +77,7 @@ public class FloatPlayer implements OnInfoListener, OnBufferingUpdateListener, O
 	private TextView mDownloadRate;
 	private TextView mLoadRate;
 	private ProgressBar mProgressBar;
+	private View mBackgroudWhenFirstLoading;
 
 	// Vitamio
 	private String mVideoSource;
@@ -89,8 +92,6 @@ public class FloatPlayer implements OnInfoListener, OnBufferingUpdateListener, O
 	
 	// State
 	private boolean isPlayerStopped;
-
-	private RelativeLayout mRelativeLayout;
 
 	public FloatPlayer(FloatPlayService floatPlayService) {
 		this.mFloatPlayService = floatPlayService;
@@ -122,8 +123,7 @@ public class FloatPlayer implements OnInfoListener, OnBufferingUpdateListener, O
 	
 	private void initView() {
 		LayoutInflater inflater = (LayoutInflater) mFloatPlayService.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		rootView = inflater.inflate(R.layout.activity_vitamio, null);
-		mRelativeLayout =  (RelativeLayout) rootView.findViewById(R.id.root);
+		rootView = inflater.inflate(R.layout.floatview, null);
 		mProgressBar = (ProgressBar) rootView.findViewById(R.id.vitamio_probar);
 		mLoadRate = (TextView) rootView.findViewById(R.id.vitamio_load_rate);			// 加载进度
 		mDownloadRate = (TextView) rootView.findViewById(R.id.vitamio_download_rate);	// 下载速度
@@ -135,21 +135,11 @@ public class FloatPlayer implements OnInfoListener, OnBufferingUpdateListener, O
 		mScaleGestureDetector = new ScaleGestureDetector(mFloatPlayService, this);
 		
 		// 没有这个画面就会透明, 不清晰
-		mVideoView.setZOrderOnTop(true);
-		mVideoView.setZOrderMediaOverlay(true);
+		mVideoView.setZOrderOnTop(true);	// Backgroud 及所有View都会被覆盖
+		mVideoView.setZOrderMediaOverlay(true);	// Backgroud也会显示在前面, 覆盖画面
 		mVideoView.getHolder().setFormat(PixelFormat.RGBX_8888);
-	}
-	
-	@Override
-	public void onClick(View v) {
-		switch (v.getId()) {
-		case R.id.vitamio_close:
-			stop();
-			break;
-		case R.id.vitamio_switch_to_full:
-			// TODO 跳转到VideoPlayerActivity
-			break;
-		}
+		
+		mBackgroudWhenFirstLoading = rootView.findViewById(R.id.vitamio_backgroud);
 	}
 	
 	/**
@@ -247,11 +237,25 @@ public class FloatPlayer implements OnInfoListener, OnBufferingUpdateListener, O
 		lp.width = scaledWidth;
 		lp.height = scaledHeight;
 		
-		lp = mRelativeLayout.getLayoutParams();
-		lp.width = scaledWidth;
-		lp.height = scaledHeight;
-		
 		mWM.updateViewLayout(rootView, mWindowParams);
+		// 嘛意思
+		mVideoView.getHolder().setSizeFromLayout();
+	}
+	
+	// ---------------------------------
+	// Button 点击事件
+	// ---------------------------------
+	
+	@Override
+	public void onClick(View v) {
+		switch (v.getId()) {
+		case R.id.vitamio_close:
+			mFloatPlayService.stopFloatPlayerAndFloatService();
+			break;
+		case R.id.vitamio_switch_to_full:
+			// TODO 跳转到VideoPlayerActivity
+			break;
+		}
 	}
 	
 	// ---------------------------------
@@ -287,6 +291,8 @@ public class FloatPlayer implements OnInfoListener, OnBufferingUpdateListener, O
 	      mProgressBar.setVisibility(View.GONE);
 	      mDownloadRate.setVisibility(View.GONE);
 	      mLoadRate.setVisibility(View.GONE);
+	      
+	      mBackgroudWhenFirstLoading.setVisibility(View.GONE);
 	      // 画面第一次上下边界会花屏 TODO
 	      resizeWindow(1);
 	      break;
@@ -299,15 +305,20 @@ public class FloatPlayer implements OnInfoListener, OnBufferingUpdateListener, O
 	
 	@Override
 	public boolean onError(MediaPlayer mp, int what, int extra) {
+		Log.i("Vitamin", "vitamio error what=" + what + " - extra=" + extra);
 		// 未测试
 		return true;
 	}
 
 	@Override
 	public void onCompletion(MediaPlayer mp) {
+		Log.i("Vitamin", "vitamio completion");
 		// 未测试
 		mp.release();
-		stop();
+		// 不要stop会出异常
+//		stop();
+		mWM.removeView(rootView);
+		mFloatPlayService.justStop();
 	}
 
 	// -------------------------------
@@ -433,11 +444,12 @@ public class FloatPlayer implements OnInfoListener, OnBufferingUpdateListener, O
 		}
 		isPlayerStopped = true;
 		// 从窗口中删除
-		mWM.removeView(rootView);
+		if(mWM != null && rootView != null)
+			mWM.removeView(rootView);
 		
-		mVideoView.stopPlayback();
+		if (mVideoView != null && mVideoView.isEnabled() && mVideoView.isPlaying())
+			mVideoView.stopPlayback();
 		mVideoView = null;
-		mFloatPlayService.stopSelf();
 	}
 	
 	/**

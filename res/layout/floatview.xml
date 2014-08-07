@@ -1,41 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent" >
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@android:color/black" />
-    
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" >
+    <io.vov.vitamio.widget.CenterLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" >
 
-        <View
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@android:color/black" />
-        
-        <io.vov.vitamio.widget.CenterLayout
-            android:id="@+id/vitamio_cnenterlayout"
+        <io.vov.vitamio.widget.VideoView
+            android:id="@+id/vitamio_videoview"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@color/mediacontroller_bg"
-            android:orientation="vertical" >
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true" />
+    </io.vov.vitamio.widget.CenterLayout>
 
-            <io.vov.vitamio.widget.VideoView
-                android:id="@+id/vitamio_videoview"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerHorizontal="true"
-                android:layout_centerVertical="true" />
-        </io.vov.vitamio.widget.CenterLayout>
-    </FrameLayout>
+    <!-- 刚开始刷新时, 背景黑色 -->
+    <View
+        android:id="@+id/vitamio_backgroud"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/black" />
 
     <RelativeLayout
-        android:id="@+id/vitamio_control_top"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/mediacontroller_bg" >
